@@ -1,8 +1,9 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Stethoscope, Users, UserPlus, ShieldCheck, FileText, Lock } from "lucide-react"
+import { Stethoscope, Users, UserPlus, ShieldCheck, FileText, Lock, Download } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/components/providers/AuthProvider"
 
@@ -19,6 +20,27 @@ export function Sidebar() {
   ]
 
   const links = allLinks.filter(link => link.roles.includes(role))
+
+  // PWA Install Prompt Logic
+  const [installPrompt, setInstallPrompt] = useState<any>(null)
+  
+  useEffect(() => {
+    const handler = (e: any) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  const handleInstall = async () => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    const { outcome } = await installPrompt.userChoice;
+    if (outcome === "accepted") {
+      setInstallPrompt(null);
+    }
+  };
 
   return (
     <aside className="w-64 bg-navy text-offwhite hidden md:flex flex-col h-screen fixed top-0 left-0">
@@ -47,6 +69,17 @@ export function Sidebar() {
           )
         })}
       </div>
+
+      {installPrompt && (
+        <div className="px-4 pb-4">
+          <button 
+            onClick={handleInstall}
+            className="w-full flex items-center justify-center gap-2 bg-teal-500 hover:bg-teal-400 text-white py-2 px-4 rounded-md font-medium transition-colors shadow-lg shadow-teal-500/20"
+          >
+            <Download className="w-4 h-4" /> Install CRM App
+          </button>
+        </div>
+      )}
 
       <div className="p-4 border-t border-white/10">
         <div className="flex items-center justify-between px-2 py-3">
