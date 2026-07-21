@@ -1,12 +1,34 @@
 "use client"
 
-import React from "react"
+import React, { useState, useEffect } from "react"
 import { useAuth } from "@/components/providers/AuthProvider"
 import { PinLockScreen } from "@/components/auth/PinLockScreen"
 import { Sidebar } from "@/components/layout/Sidebar"
+import { Download } from "lucide-react"
 
 export function AppContent({ children }: { children: React.ReactNode }) {
   const { role } = useAuth()
+
+  // PWA Install Prompt Logic for Mobile Header
+  const [installPrompt, setInstallPrompt] = useState<any>(null)
+  
+  useEffect(() => {
+    const handler = (e: any) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  const handleInstall = async () => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    const { outcome } = await installPrompt.userChoice;
+    if (outcome === "accepted") {
+      setInstallPrompt(null);
+    }
+  };
 
   if (role === "locked") {
     return <PinLockScreen />
@@ -21,6 +43,14 @@ export function AppContent({ children }: { children: React.ReactNode }) {
           <div className="font-heading text-lg font-bold flex items-center gap-2">
             <span className="text-primary">✚</span> Sadiq Clinic
           </div>
+          {installPrompt && (
+            <button 
+              onClick={handleInstall}
+              className="flex items-center gap-1.5 bg-teal-500 hover:bg-teal-400 text-white py-1.5 px-3 rounded text-sm font-medium transition-colors"
+            >
+              <Download className="w-3.5 h-3.5" /> Install
+            </button>
+          )}
         </div>
         
         <main className="flex-1 p-4 sm:p-6 lg:p-8">
