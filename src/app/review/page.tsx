@@ -114,7 +114,7 @@ export default function ReviewPage() {
                         <Button 
                           variant="outline" 
                           size="sm"
-                          onClick={() => toggleFlag(visit.id, visit.flag_status)}
+                          onClick={() => toggleFlag(visit.id!, visit.flag_status)}
                           className="text-gray-600"
                         >
                           Unflag
@@ -124,14 +124,14 @@ export default function ReviewPage() {
                           <input 
                             className="border border-border rounded px-2 py-1 text-xs w-32 focus:outline-none focus:border-primary"
                             placeholder="Reason for flag..."
-                            value={flagReason[visit.id] || ""}
-                            onChange={(e) => setFlagReason({...flagReason, [visit.id]: e.target.value})}
+                            value={flagReason[visit.id!] || ""}
+                            onChange={(e) => setFlagReason({...flagReason, [visit.id!]: e.target.value})}
                           />
                           <Button 
                             variant="ghost" 
                             size="sm" 
                             className="text-red-600 hover:bg-red-50 hover:text-red-700"
-                            onClick={() => toggleFlag(visit.id, visit.flag_status)}
+                            onClick={() => toggleFlag(visit.id!, visit.flag_status)}
                           >
                             <Flag className="w-4 h-4 mr-1" /> Flag
                           </Button>

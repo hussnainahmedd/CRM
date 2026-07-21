@@ -29,8 +29,8 @@ export default function PatientsPage() {
         const lowerQ = searchQuery.toLowerCase()
         return db.patients
           .filter(p => 
-            p.name.toLowerCase().includes(lowerQ) || 
-            (p.phone && p.phone.includes(searchQuery))
+            Boolean(p.name.toLowerCase().includes(lowerQ) || 
+            (p.phone && p.phone.includes(searchQuery)))
           )
           .reverse()
           .sortBy("created_at")
