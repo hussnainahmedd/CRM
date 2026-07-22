@@ -99,8 +99,10 @@ export async function GET(req: Request) {
 
   const url = new URL(req.url);
   const sinceStr = url.searchParams.get('since');
-  // TEMPORARY: Force pull everything to guarantee sync is fixed
   let since = new Date(0);
+  if (sinceStr) {
+     since = new Date(parseInt(sinceStr));
+  }
 
   try {
     const updatedPatients = await db.select().from(patients).where(gt(patients.last_synced_at, since));

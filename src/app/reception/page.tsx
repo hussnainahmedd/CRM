@@ -63,6 +63,9 @@ export default function ReceptionPage() {
       setFee("")
       setPaymentMethod("Cash")
       alert("Patient visit logged successfully!")
+      
+      // Trigger background sync instantly
+      import("@/lib/sync").then(m => m.syncWithCloud());
     } catch (err) {
       console.error(err)
       alert("Error saving record.")

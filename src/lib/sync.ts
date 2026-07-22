@@ -5,10 +5,9 @@ export async function syncWithCloud() {
   console.log("Starting sync with Cloud Database...");
 
   try {
-    // 1. Fetch ALL local records to guarantee sync
-    const unsyncedPatients = await db.patients.toArray();
-    const unsyncedVisits = await db.visits.toArray();
-    alert(`Found ${unsyncedPatients.length} unsynced patients and ${unsyncedVisits.length} unsynced visits locally.`);
+    // 1. Fetch only unsynced records locally
+    const unsyncedPatients = await db.patients.filter(p => !p.synced).toArray();
+    const unsyncedVisits = await db.visits.filter(v => !v.synced).toArray();
 
     let pushSuccess = true;
 
@@ -33,7 +32,6 @@ export async function syncWithCloud() {
       } else {
         const errorText = await res.text();
         console.error("Failed to push to cloud", errorText);
-        alert("Sync Error: " + errorText);
         pushSuccess = false;
       }
     }
@@ -59,11 +57,8 @@ export async function syncWithCloud() {
 
         localStorage.setItem('last_sync_timestamp', Date.now().toString());
         console.log(`Pulled ${patients?.length || 0} patients and ${visits?.length || 0} visits from cloud.`);
-        if (patients?.length > 0 || visits?.length > 0) {
-           alert(`Pulled ${patients.length} patients and ${visits.length} visits from the cloud!`);
-        }
       } else {
-         alert("Pull Error: " + await pullRes.text());
+         console.error("Pull Error: ", await pullRes.text());
       }
     }
   } catch (err) {
@@ -73,9 +68,10 @@ export async function syncWithCloud() {
 
 if (typeof window !== 'undefined') {
   window.addEventListener('online', syncWithCloud);
+  // Auto-sync every 30 seconds
   setInterval(() => {
     if (navigator.onLine) syncWithCloud();
-  }, 5 * 60 * 1000);
+  }, 30 * 1000);
 
   // Trigger an initial sync shortly after the app loads
   setTimeout(() => {
