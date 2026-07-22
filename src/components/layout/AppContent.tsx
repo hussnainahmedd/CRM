@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react"
 import { useAuth } from "@/components/providers/AuthProvider"
 import { PinLockScreen } from "@/components/auth/PinLockScreen"
 import { Sidebar } from "@/components/layout/Sidebar"
-import { Download, Lock } from "lucide-react"
+import { Download, Lock, RefreshCw } from "lucide-react"
 
 export function AppContent({ children }: { children: React.ReactNode }) {
   const { role, logout } = useAuth()
@@ -43,6 +43,17 @@ export function AppContent({ children }: { children: React.ReactNode }) {
             <span className="text-primary">✚</span> Sadiq Clinic
           </div>
           <div className="flex items-center gap-3">
+            <button 
+              onClick={async () => {
+                const { syncWithCloud } = require("@/lib/sync");
+                alert("Forcing sync...");
+                await syncWithCloud();
+                alert("Sync attempt finished!");
+              }}
+              className="flex items-center gap-1.5 bg-blue-500 hover:bg-blue-400 text-white py-1.5 px-3 rounded text-sm font-medium transition-colors"
+            >
+              <RefreshCw className="w-3.5 h-3.5" /> Sync
+            </button>
             {installPrompt && (
               <button 
                 onClick={handleInstall}
