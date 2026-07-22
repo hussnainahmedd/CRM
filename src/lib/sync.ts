@@ -1,43 +1,71 @@
 import { db } from "./db"
 
-// This is a stub for the Supabase sync service.
-// Once a Supabase project is created and environment variables are added,
-// this file will handle two-way synchronization between Dexie (local) and Supabase (cloud).
+export async function syncWithCloud() {
+  if (typeof window === 'undefined' || !navigator.onLine) return;
+  console.log("Starting sync with Cloud Database...");
 
-export async function syncWithSupabase() {
-  console.log("Starting sync with Supabase...")
+  try {
+    // 1. Fetch unsynced records locally
+    const unsyncedPatients = await db.patients.filter(p => !p.synced).toArray();
+    const unsyncedVisits = await db.visits.filter(v => !v.synced).toArray();
 
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    console.warn("Supabase credentials not found. Skipping sync. Application will run in local-only mode.")
-    return
+    let pushSuccess = true;
+
+    // 2. Push to Cloud
+    if (unsyncedPatients.length > 0 || unsyncedVisits.length > 0) {
+      const res = await fetch('/api/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ patients: unsyncedPatients, visits: unsyncedVisits })
+      });
+
+      if (res.ok) {
+        // Mark local as synced
+        const pIds = unsyncedPatients.map(p => p.id);
+        const vIds = unsyncedVisits.map(v => v.id);
+        
+        await db.transaction('rw', db.patients, db.visits, async () => {
+          for (const id of pIds) await db.patients.update(id, { synced: true });
+          for (const id of vIds) await db.visits.update(id, { synced: true });
+        });
+        console.log(`Pushed ${pIds.length} patients and ${vIds.length} visits to cloud.`);
+      } else {
+        console.error("Failed to push to cloud", await res.text());
+        pushSuccess = false;
+      }
+    }
+
+    // 3. Pull from Cloud (Two-Way)
+    if (pushSuccess) {
+      const lastSync = localStorage.getItem('last_sync_timestamp') || '0';
+      const pullRes = await fetch(`/api/sync?since=${lastSync}`);
+      
+      if (pullRes.ok) {
+        const { patients, visits } = await pullRes.json();
+        
+        await db.transaction('rw', db.patients, db.visits, async () => {
+          if (patients?.length > 0) {
+             const mapped = patients.map((p: any) => ({ ...p, synced: true, created_at: new Date(p.created_at) }));
+             await db.patients.bulkPut(mapped);
+          }
+          if (visits?.length > 0) {
+             const mapped = visits.map((v: any) => ({ ...v, synced: true, timestamp: new Date(v.timestamp) }));
+             await db.visits.bulkPut(mapped);
+          }
+        });
+
+        localStorage.setItem('last_sync_timestamp', Date.now().toString());
+        console.log(`Pulled ${patients?.length || 0} patients and ${visits?.length || 0} visits from cloud.`);
+      }
+    }
+  } catch (err) {
+    console.error("Sync error:", err);
   }
-
-  // Example Sync Logic:
-  // 1. Fetch unsynced patients and visits from Dexie
-  // const unsyncedPatients = await db.patients.where('synced').equals('false').toArray();
-  // const unsyncedVisits = await db.visits.where('synced').equals('false').toArray();
-  
-  // 2. Push to Supabase via Supabase JS Client
-  // const { error: pError } = await supabase.from('patients').upsert(unsyncedPatients);
-  // if (!pError) {
-  //    await db.patients.where('id').anyOf(unsyncedPatients.map(p => p.id)).modify({ synced: true });
-  // }
-  
-  // 3. Pull updates from Supabase (e.g. if doctor flagged an entry from another device)
-  // const { data: remoteVisits } = await supabase.from('visits').select('*').gt('updated_at', lastSyncTime);
-  // await db.visits.bulkPut(remoteVisits);
-
-  console.log("Sync complete.")
 }
 
-// Optionally, this could be triggered periodically or on window focus
 if (typeof window !== 'undefined') {
-  window.addEventListener('online', syncWithSupabase)
-  
-  // Setup a 5-minute periodic sync
+  window.addEventListener('online', syncWithCloud);
   setInterval(() => {
-    if (navigator.onLine) {
-      syncWithSupabase()
-    }
-  }, 5 * 60 * 1000)
+    if (navigator.onLine) syncWithCloud();
+  }, 5 * 60 * 1000);
 }

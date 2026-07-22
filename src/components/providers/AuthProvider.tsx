@@ -6,7 +6,7 @@ type Role = "locked" | "receptionist" | "doctor"
 
 interface AuthContextType {
   role: Role
-  login: (pin: string) => boolean
+  login: (pin: string) => Promise<boolean>
   logout: () => void
 }
 
@@ -29,7 +29,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsInitialized(true)
   }, [])
 
-  const login = (pin: string) => {
+  const login = async (pin: string): Promise<boolean> => {
+    // Attempt online API login if network is available
+    if (typeof window !== "undefined" && navigator.onLine) {
+      try {
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pin })
+        })
+        
+        if (res.ok) {
+          const data = await res.json()
+          setRole(data.role)
+          sessionStorage.setItem("crm_auth_role", data.role)
+          localStorage.setItem("crm_offline_pin", pin)
+          localStorage.setItem("crm_offline_role", data.role)
+          return true
+        } else {
+          // Explicitly failed online check
+          return false
+        }
+      } catch (err) {
+        console.warn("Online login failed, falling back to offline", err)
+      }
+    }
+
+    // Fallback to offline cached credentials
+    const savedPin = localStorage.getItem("crm_offline_pin")
+    if (savedPin === pin) {
+      const savedRole = (localStorage.getItem("crm_offline_role") as Role) || "receptionist"
+      setRole(savedRole)
+      sessionStorage.setItem("crm_auth_role", savedRole)
+      return true
+    }
+
+    // Ultimate fallback for initial offline run
     if (pin === DOCTOR_PIN) {
       setRole("doctor")
       sessionStorage.setItem("crm_auth_role", "doctor")

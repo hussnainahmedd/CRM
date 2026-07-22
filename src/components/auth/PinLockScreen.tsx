@@ -9,23 +9,29 @@ export function PinLockScreen() {
   const [pin, setPin] = useState("")
   const [error, setError] = useState(false)
 
+  const [isLoading, setIsLoading] = useState(false)
+
   const handleKeypad = (num: string) => {
-    if (pin.length < 4) {
+    if (pin.length < 4 && !isLoading) {
       setPin(prev => prev + num)
       setError(false)
     }
   }
 
   const handleDelete = () => {
+    if (isLoading) return
     setPin(prev => prev.slice(0, -1))
     setError(false)
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (pin.length !== 4) return
+    if (pin.length !== 4 || isLoading) return
     
-    const success = login(pin)
+    setIsLoading(true)
+    const success = await login(pin)
+    setIsLoading(false)
+    
     if (!success) {
       setError(true)
       setPin("")
