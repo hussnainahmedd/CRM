@@ -5,9 +5,9 @@ export async function syncWithCloud() {
   console.log("Starting sync with Cloud Database...");
 
   try {
-    // 1. Fetch unsynced records locally
-    const unsyncedPatients = await db.patients.filter(p => !p.synced).toArray();
-    const unsyncedVisits = await db.visits.filter(v => !v.synced).toArray();
+    // 1. Fetch ALL local records to guarantee sync
+    const unsyncedPatients = await db.patients.toArray();
+    const unsyncedVisits = await db.visits.toArray();
     alert(`Found ${unsyncedPatients.length} unsynced patients and ${unsyncedVisits.length} unsynced visits locally.`);
 
     let pushSuccess = true;
