@@ -8,6 +8,7 @@ export async function syncWithCloud() {
     // 1. Fetch unsynced records locally
     const unsyncedPatients = await db.patients.filter(p => !p.synced).toArray();
     const unsyncedVisits = await db.visits.filter(v => !v.synced).toArray();
+    alert(`Found ${unsyncedPatients.length} unsynced patients and ${unsyncedVisits.length} unsynced visits locally.`);
 
     let pushSuccess = true;
 
@@ -58,6 +59,11 @@ export async function syncWithCloud() {
 
         localStorage.setItem('last_sync_timestamp', Date.now().toString());
         console.log(`Pulled ${patients?.length || 0} patients and ${visits?.length || 0} visits from cloud.`);
+        if (patients?.length > 0 || visits?.length > 0) {
+           alert(`Pulled ${patients.length} patients and ${visits.length} visits from the cloud!`);
+        }
+      } else {
+         alert("Pull Error: " + await pullRes.text());
       }
     }
   } catch (err) {
