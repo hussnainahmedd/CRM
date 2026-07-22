@@ -68,4 +68,9 @@ if (typeof window !== 'undefined') {
   setInterval(() => {
     if (navigator.onLine) syncWithCloud();
   }, 5 * 60 * 1000);
+
+  // Trigger an initial sync shortly after the app loads
+  setTimeout(() => {
+    if (navigator.onLine) syncWithCloud();
+  }, 2000);
 }
