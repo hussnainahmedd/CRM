@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Stethoscope, Users, UserPlus, ShieldCheck, FileText, Lock, Download } from "lucide-react"
+import { Stethoscope, Users, UserPlus, ShieldCheck, FileText, Lock, Download, RefreshCw } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/components/providers/AuthProvider"
 
@@ -95,13 +95,27 @@ export function Sidebar() {
             </div>
           </div>
           
-          <button 
-            onClick={logout}
-            className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors"
-            title="Lock App"
-          >
-            <Lock className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button 
+              onClick={async () => {
+                const { syncWithCloud } = require("@/lib/sync");
+                alert("Forcing sync...");
+                await syncWithCloud();
+                alert("Sync attempt finished!");
+              }}
+              className="p-2 text-blue-400 hover:text-white hover:bg-blue-500/20 rounded-full transition-colors"
+              title="Force Sync"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
+            <button 
+              onClick={logout}
+              className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+              title="Lock App"
+            >
+              <Lock className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
     </aside>
