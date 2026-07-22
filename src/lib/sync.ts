@@ -30,7 +30,9 @@ export async function syncWithCloud() {
         });
         console.log(`Pushed ${pIds.length} patients and ${vIds.length} visits to cloud.`);
       } else {
-        console.error("Failed to push to cloud", await res.text());
+        const errorText = await res.text();
+        console.error("Failed to push to cloud", errorText);
+        alert("Sync Error: " + errorText);
         pushSuccess = false;
       }
     }

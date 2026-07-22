@@ -87,9 +87,9 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (err) {
+  } catch (err: any) {
     console.error('Sync POST error:', err);
-    return NextResponse.json({ error: 'Sync failed' }, { status: 500 });
+    return NextResponse.json({ error: 'Sync failed: ' + err.message }, { status: 500 });
   }
 }
 
